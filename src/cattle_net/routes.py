@@ -1,12 +1,14 @@
 from io import BytesIO
-import os
+from typing import Annotated
 
-from fastapi import APIRouter, File, HTTPException, Request, UploadFile
+from fastapi import APIRouter, File, HTTPException, Request, UploadFile, status
 from PIL import Image, UnidentifiedImageError
-from starlette.status import HTTP_404_NOT_FOUND
+
 from .schemas import HealthResponse, PredictionItem, PredictionResponse
 
 router = APIRouter()
+ALLOWED_MIME_TYPES = {"image/jpeg", "image/png", "image/webp"}
+MAX_UPLOAD_BYTES = 5 * 1024 * 1024
 
 
 @router.get("/health", response_model=HealthResponse)
@@ -26,20 +28,65 @@ def health_check(request: Request) -> HealthResponse:
         model_version=classifier.model_version,
     )
 
-@router.post("/api/v1/predictions", response_model=PredictionResponse)
-async def create_prediction(request: Request, file: UploadFile) -> PredictionResponse:
-    allowed_types = {"image/jpeg", "image/png", "image/webp",}
 
-    if file.content_type not in allowed_types:
+@router.post("/api/v1/predictions", response_model=PredictionResponse)
+async def create_prediction(
+    request: Request,
+    file: Annotated[UploadFile, File(...)],
+) -> PredictionResponse:
+    if file.content_type not in ALLOWED_MIME_TYPES:
         raise HTTPException(
-            status_code=415,
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
             detail="Unsupported image type",
         )
 
     image_bytes = await file.read()
 
     if not image_bytes:
-        raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="Please upload an appropriate image")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Uploaded file is empty",
+        )
 
-    if os.path.getsize(image_bytes) > 5 * 1024 * 1024:
-        
+    if len(image_bytes) > MAX_UPLOAD_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Size limit exceeded: maximum upload size is 5 MB",
+        )
+
+    try:
+        with Image.open(BytesIO(image_bytes)) as image:
+            image.load()
+
+            width, height = image.size
+
+            if width < 1 or height < 1:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Image dimensions must be greater than zero",
+                )
+
+            classifier = getattr(request.app.state, "cattle_classifier", None)
+            if classifier is None:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Classifier is not loaded",
+                )
+
+            predictions = classifier.predict(image)
+
+    except (UnidentifiedImageError, OSError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Uploaded file is not a valid image",
+        ) from exc
+
+    api_predictions = [
+        PredictionItem(
+            breed=prediction.label,
+            confidence=prediction.confidence,
+        )
+        for prediction in predictions
+    ]
+
+    return PredictionResponse(predictions=api_predictions)

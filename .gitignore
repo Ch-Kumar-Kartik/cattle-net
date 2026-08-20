@@ -12,3 +12,6 @@ wheels/
 # Data
 data/
 artifacts/
+
+# Codex instructions for guidance as a senior developer helping to build this project
+AGENTS.md

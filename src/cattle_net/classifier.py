@@ -13,7 +13,6 @@ DEFAULT_CLASSES_PATH = PROJECT_ROOT / "artifacts" / "classes.json"
 EXPECTED_CLASS_COUNT = 8
 TOP_PREDICTION_COUNT = 3
 MODEL_VERSION = "v1"
-MODEL_VERSION = "v1"
 
 
 @dataclass(frozen=True)
