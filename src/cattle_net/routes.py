@@ -89,4 +89,7 @@ async def create_prediction(
         for prediction in predictions
     ]
 
-    return PredictionResponse(predictions=api_predictions)
+    return PredictionResponse(
+        model_version=classifier.model_version,
+        predictions=api_predictions,
+    )

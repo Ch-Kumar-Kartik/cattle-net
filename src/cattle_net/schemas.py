@@ -7,6 +7,7 @@ class PredictionItem(BaseModel):
 
 
 class PredictionResponse(BaseModel):
+    model_version: str
     predictions: list[PredictionItem]
 
 

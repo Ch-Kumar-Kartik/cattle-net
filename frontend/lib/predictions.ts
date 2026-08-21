@@ -4,6 +4,7 @@ export type Prediction = {
 }
 
 export type PredictionResponse = {
+  model_version: string
   predictions: Prediction[]
 }
 

@@ -82,11 +82,12 @@ def test_prediction_returns_top_three_and_passes_pil_image(
     response = asyncio.run(create_prediction(make_request(app), upload))
 
     assert response.model_dump() == {
+        "model_version": "v1",
         "predictions": [
             {"breed": "LOCAL", "confidence": 0.8},
             {"breed": "SINDHI", "confidence": 0.1},
             {"breed": "BRAHMA", "confidence": 0.05},
-        ]
+        ],
     }
     assert isinstance(classifier.received_image, Image.Image)
 
