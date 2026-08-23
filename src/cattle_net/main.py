@@ -4,8 +4,6 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from cattle_net import auth_routes
-
 from .classifier import CattleClassifier
 from .database import engine
 from .models import Base

@@ -1,10 +1,20 @@
 from io import BytesIO
 from typing import Annotated
 
-from fastapi import APIRouter, File, HTTPException, Request, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
 from PIL import Image, UnidentifiedImageError
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from .schemas import HealthResponse, PredictionItem, PredictionResponse
+from .database import get_db
+from .dependencies import CurrentUser
+from .models import PredictionRecord
+from .schemas import (
+    HealthResponse,
+    PredictionHistoryItem,
+    PredictionItem,
+    PredictionResponse,
+)
 
 router = APIRouter()
 ALLOWED_MIME_TYPES = {"image/jpeg", "image/png", "image/webp"}
@@ -12,7 +22,7 @@ MAX_UPLOAD_BYTES = 5 * 1024 * 1024
 
 
 @router.get("/health", response_model=HealthResponse)
-def health_check(request: Request) -> HealthResponse:
+def health_check(request: Request, current_user: CurrentUser) -> HealthResponse:
     classifier = getattr(request.app.state, "cattle_classifier", None)
 
     if classifier is None:
@@ -29,10 +39,28 @@ def health_check(request: Request) -> HealthResponse:
     )
 
 
+@router.get(
+    "/api/v1/predictions/history",
+    response_model=list[PredictionHistoryItem],
+)
+async def list_prediction_history(
+    current_user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> list[PredictionRecord]:
+    result = await db.execute(
+        select(PredictionRecord)
+        .where(PredictionRecord.user_id == current_user.id)
+        .order_by(PredictionRecord.created_at.desc())
+    )
+    return list(result.scalars().all())
+
+
 @router.post("/api/v1/predictions", response_model=PredictionResponse)
 async def create_prediction(
     request: Request,
     file: Annotated[UploadFile, File(...)],
+    current_user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> PredictionResponse:
     if file.content_type not in ALLOWED_MIME_TYPES:
         raise HTTPException(
@@ -88,6 +116,15 @@ async def create_prediction(
         )
         for prediction in predictions
     ]
+
+    db.add(
+        PredictionRecord(
+            user_id=current_user.id,
+            model_version=classifier.model_version,
+            predictions=[prediction.model_dump() for prediction in api_predictions],
+        )
+    )
+    await db.commit()
 
     return PredictionResponse(
         model_version=classifier.model_version,

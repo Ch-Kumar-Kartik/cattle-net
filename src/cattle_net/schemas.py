@@ -13,6 +13,15 @@ class PredictionResponse(BaseModel):
     predictions: list[PredictionItem]
 
 
+class PredictionHistoryItem(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    model_version: str
+    predictions: list[PredictionItem]
+    created_at: datetime
+
+
 class HealthResponse(BaseModel):
     status: str
     classifier_loaded: bool
@@ -31,3 +40,13 @@ class UserResponse(BaseModel):
 class RegisterRequest(BaseModel):
     email: EmailStr = Field(max_length=120)
     password: str
+
+
+class LoginRequest(BaseModel):
+    email: EmailStr = Field(max_length=120)
+    password: str
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
