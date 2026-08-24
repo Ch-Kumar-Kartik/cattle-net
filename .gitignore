@@ -9,6 +9,9 @@ wheels/
 # Virtual environments
 .venv
 
+# Secrets
+src/cattle_net/.env
+
 # Data
 data/
 artifacts/

@@ -4,11 +4,11 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from .auth_routes import router as auth_router
 from .classifier import CattleClassifier
 from .database import engine
 from .models import Base
 from .routes import router
-from .auth_routes import router as auth_router
 
 
 @asynccontextmanager

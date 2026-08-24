@@ -187,10 +187,6 @@ export default function HomePage() {
               <Scan className="size-4" />
               Breed Recognition
             </Link>
-            <Link href="/detect" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-              <Stethoscope className="size-4" />
-              Disease Detection
-            </Link>
             <Link href="/tools" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
               <Leaf className="size-4" />
               Feed & Nutrition
@@ -200,7 +196,9 @@ export default function HomePage() {
               Nearby Vets
             </Link>
           </nav>
-          <div className="md:hidden" />
+          <Button asChild className="rounded-full" variant="outline">
+            <Link href="/auth">Sign in</Link>
+          </Button>
         </div>
       </header>
 

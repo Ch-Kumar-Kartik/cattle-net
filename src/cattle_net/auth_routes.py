@@ -5,10 +5,10 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .auth import hash_password, verify_password, create_access_token
+from .auth import create_access_token, hash_password, verify_password
 from .database import get_db
 from .models import User
-from .schemas import LoginRequest, RegisterRequest, UserResponse, TokenResponse
+from .schemas import LoginRequest, RegisterRequest, TokenResponse, UserResponse
 
 router = APIRouter(
     prefix="/api/v1/auth",
@@ -55,7 +55,9 @@ async def register_user(
 
 
 @router.post("/login", status_code=status.HTTP_200_OK, response_model=TokenResponse)
-async def login_user(login: LoginRequest, db: Annotated[AsyncSession, Depends(get_db)]) -> TokenResponse:
+async def login_user(
+    login: LoginRequest, db: Annotated[AsyncSession, Depends(get_db)]
+) -> TokenResponse:
     email = login.email.lower()
     result = await db.execute(select(User).where(User.email == email))
     user = result.scalar_one_or_none()
@@ -73,4 +75,4 @@ async def login_user(login: LoginRequest, db: Annotated[AsyncSession, Depends(ge
         )
     access_token = create_access_token(user.id)
 
-    return TokenResponse(access_token=access_token, token_type= "bearer")
+    return TokenResponse(access_token=access_token, token_type="bearer")

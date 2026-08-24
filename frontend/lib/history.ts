@@ -1,24 +1,23 @@
-export type Prediction = {
-  breed: string
-  confidence: number
-}
+import type { Prediction } from "@/lib/predictions"
 
-export type PredictionResponse = {
+export type PredictionHistoryItem = {
+  id: number
   model_version: string
   predictions: Prediction[]
+  created_at: string
 }
 
 type ErrorResponse = {
   detail?: string | unknown[]
 }
 
-export class PredictionApiError extends Error {
+export class HistoryApiError extends Error {
   constructor(
     message: string,
     readonly status: number,
   ) {
     super(message)
-    this.name = "PredictionApiError"
+    this.name = "HistoryApiError"
   }
 }
 
@@ -37,45 +36,36 @@ function getErrorMessage(payload: ErrorResponse | null): string {
     return payload.detail
   }
 
-  return "The backend could not process this image."
+  return "The history service could not process this request."
 }
 
-export async function requestPredictions(
-  file: File,
+export async function requestPredictionHistory(
   accessToken: string,
-): Promise<PredictionResponse> {
-  const formData = new FormData()
-  formData.append("file", file)
-  const backendBaseUrl = getBackendBaseUrl()
-
+): Promise<PredictionHistoryItem[]> {
   let response: Response
   try {
-    response = await fetch(`${backendBaseUrl}/api/v1/predictions`, {
-      method: "POST",
+    response = await fetch(`${getBackendBaseUrl()}/api/v1/predictions/history`, {
       headers: { Authorization: `Bearer ${accessToken}` },
-      body: formData,
     })
   } catch {
-    throw new Error(
-      "Unable to reach the prediction service. Confirm that the backend is running.",
-    )
+    throw new Error("Unable to reach the history service. Confirm that the backend is running.")
   }
 
   const payload = (await response.json().catch(() => null)) as
-    | PredictionResponse
+    | PredictionHistoryItem[]
     | ErrorResponse
     | null
 
   if (!response.ok) {
-    throw new PredictionApiError(
+    throw new HistoryApiError(
       getErrorMessage(payload as ErrorResponse | null),
       response.status,
     )
   }
 
-  if (!payload || !Array.isArray((payload as PredictionResponse).predictions)) {
-    throw new Error("The prediction service returned an unexpected response.")
+  if (!Array.isArray(payload)) {
+    throw new Error("The history service returned an unexpected response.")
   }
 
-  return payload as PredictionResponse
+  return payload
 }

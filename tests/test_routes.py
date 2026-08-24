@@ -34,6 +34,18 @@ class FakeUpload:
         return self.content
 
 
+class FakeSession:
+    def __init__(self) -> None:
+        self.added = []
+        self.committed = False
+
+    def add(self, item) -> None:
+        self.added.append(item)
+
+    async def commit(self) -> None:
+        self.committed = True
+
+
 @pytest.fixture
 def app_and_classifier():
     app = FastAPI()
@@ -63,7 +75,7 @@ def make_image_bytes() -> bytes:
 def test_health_returns_classifier_metadata(app_and_classifier):
     app, _ = app_and_classifier
 
-    response = health_check(make_request(app))
+    response = health_check(make_request(app), SimpleNamespace(id=1))
 
     assert response.model_dump() == {
         "status": "ok",
@@ -78,8 +90,11 @@ def test_prediction_returns_top_three_and_passes_pil_image(
 ):
     app, classifier = app_and_classifier
     upload = make_upload(make_image_bytes(), "image/png")
+    session = FakeSession()
 
-    response = asyncio.run(create_prediction(make_request(app), upload))
+    response = asyncio.run(
+        create_prediction(make_request(app), upload, SimpleNamespace(id=1), session)
+    )
 
     assert response.model_dump() == {
         "model_version": "v1",
@@ -90,6 +105,11 @@ def test_prediction_returns_top_three_and_passes_pil_image(
         ],
     }
     assert isinstance(classifier.received_image, Image.Image)
+    assert session.committed is True
+    assert session.added[0].user_id == 1
+    assert session.added[0].predictions == [
+        prediction.model_dump() for prediction in response.predictions
+    ]
 
 
 def test_prediction_rejects_unsupported_mime_type(app_and_classifier):
@@ -97,7 +117,11 @@ def test_prediction_rejects_unsupported_mime_type(app_and_classifier):
     upload = make_upload(b"not an image", "text/plain")
 
     with pytest.raises(HTTPException) as error:
-        asyncio.run(create_prediction(make_request(app), upload))
+        asyncio.run(
+            create_prediction(
+                make_request(app), upload, SimpleNamespace(id=1), FakeSession()
+            )
+        )
 
     assert error.value.status_code == 415
 
@@ -107,7 +131,11 @@ def test_prediction_rejects_empty_file(app_and_classifier):
     upload = make_upload(b"", "image/png")
 
     with pytest.raises(HTTPException) as error:
-        asyncio.run(create_prediction(make_request(app), upload))
+        asyncio.run(
+            create_prediction(
+                make_request(app), upload, SimpleNamespace(id=1), FakeSession()
+            )
+        )
 
     assert error.value.status_code == 400
 
@@ -117,7 +145,11 @@ def test_prediction_rejects_file_over_five_megabytes(app_and_classifier):
     upload = make_upload(b"0" * (MAX_UPLOAD_BYTES + 1), "image/png")
 
     with pytest.raises(HTTPException) as error:
-        asyncio.run(create_prediction(make_request(app), upload))
+        asyncio.run(
+            create_prediction(
+                make_request(app), upload, SimpleNamespace(id=1), FakeSession()
+            )
+        )
 
     assert error.value.status_code == 400
 
@@ -127,6 +159,10 @@ def test_prediction_rejects_invalid_image_bytes(app_and_classifier):
     upload = make_upload(b"not an image", "image/png")
 
     with pytest.raises(HTTPException) as error:
-        asyncio.run(create_prediction(make_request(app), upload))
+        asyncio.run(
+            create_prediction(
+                make_request(app), upload, SimpleNamespace(id=1), FakeSession()
+            )
+        )
 
     assert error.value.status_code == 400

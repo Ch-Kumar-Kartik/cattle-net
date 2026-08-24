@@ -6,6 +6,7 @@ from PIL import Image, UnidentifiedImageError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .config import settings
 from .database import get_db
 from .dependencies import CurrentUser
 from .models import PredictionRecord
@@ -18,7 +19,7 @@ from .schemas import (
 
 router = APIRouter()
 ALLOWED_MIME_TYPES = {"image/jpeg", "image/png", "image/webp"}
-MAX_UPLOAD_BYTES = 5 * 1024 * 1024
+MAX_UPLOAD_BYTES = settings.max_upload_size_bytes
 
 
 @router.get("/health", response_model=HealthResponse)

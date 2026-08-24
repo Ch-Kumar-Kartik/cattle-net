@@ -12,6 +12,7 @@ import {
   PredictionApiError,
   requestPredictions,
 } from "@/lib/predictions"
+import { clearAccessToken, getAccessToken } from "@/lib/auth"
 
 const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"])
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024
@@ -111,7 +112,13 @@ export default function DetectPage() {
     setPredictions(null)
 
     try {
-      const response = await requestPredictions(file)
+      const accessToken = getAccessToken()
+      if (!accessToken) {
+        setError("Sign in before analyzing an image.")
+        return
+      }
+
+      const response = await requestPredictions(file, accessToken)
       const rankedPredictions = [...response.predictions]
         .sort((first, second) => second.confidence - first.confidence)
         .slice(0, 3)
@@ -123,7 +130,12 @@ export default function DetectPage() {
       setPredictions(rankedPredictions)
     } catch (caughtError) {
       if (caughtError instanceof PredictionApiError) {
-        setError(caughtError.message)
+        if (caughtError.status === 401) {
+          clearAccessToken()
+          setError("Your session has expired. Sign in again to continue.")
+        } else {
+          setError(caughtError.message)
+        }
       } else if (caughtError instanceof Error) {
         setError(caughtError.message)
       } else {
@@ -149,9 +161,14 @@ export default function DetectPage() {
               <p className="text-sm text-gray-600">Upload and identify your cattle breed</p>
             </div>
           </div>
-          <Button asChild className="rounded-full" variant="outline">
-            <Link href="/">Back to Home</Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button asChild className="rounded-full" variant="outline">
+              <Link href="/history">History</Link>
+            </Button>
+            <Button asChild className="rounded-full" variant="outline">
+              <Link href="/">Back to Home</Link>
+            </Button>
+          </div>
         </div>
       </header>
 
