@@ -1,21 +1,89 @@
-# Python-generated files
+# Python virtual environments and bytecode
+.venv/
+venv/
+env/
 __pycache__/
-*.py[oc]
+*.py[cod]
+*$py.class
+
+# Python tooling, tests, coverage, and packaging output
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.hypothesis/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
 build/
 dist/
+site/
 wheels/
-*.egg-info
+.eggs/
+*.egg-info/
+pip-wheel-metadata/
 
-# Virtual environments
-.venv
+# Local environment and secret files. Keep checked-in templates trackable.
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+.pgpass
+*.pem
+*.key
+*.p12
+*.pfx
+service-account*.json
+*service-account*.json
 
-# Secrets
-src/cattle_net/.env
+# Local databases and backups
+*.db
+*.db-*
+*.db-journal
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+*.dump
+*.bak
 
-# Data
+# JavaScript and Next.js generated files
+**/node_modules/
+**/.next/
+**/out/
+**/coverage/
+**/.turbo/
+**/.cache/
+*.tsbuildinfo
+**/.vercel/
+
+# Local ML data and experiment output
 data/
-artifacts/
-cattle-net.db
+datasets/
+training_output/
+runs/
+wandb/
+mlruns/
+lightning_logs/
 
-# Codex instructions for guidance as a senior developer helping to build this project
+# Only the production inference artifacts are source files.
+artifacts/*
+!artifacts/cattle_resnet18_v1.pth
+!artifacts/classes.json
+
+# Logs, temporary files, editor metadata, and operating-system files
+*.log
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
 AGENTS.md

@@ -33,11 +33,14 @@ def load_classes(classes_path: Path) -> list[str]:
     return classes
 
 
-def choose_device() -> torch.device:
-    if not torch.cuda.is_available():
-        raise RuntimeError("CUDA is required for cattle classifier inference")
+def choose_device(device_name: str) -> torch.device:
+    if device_name not in {"cpu", "cuda"}:
+        raise ValueError(f"Unsupported model device: {device_name}")
 
-    return torch.device("cuda")
+    if device_name == "cuda" and not torch.cuda.is_available():
+        raise RuntimeError("CUDA was selected but is not available")
+
+    return torch.device(device_name)
 
 
 def build_model(
@@ -81,8 +84,9 @@ class CattleClassifier:
         self,
         checkpoint_path: Path = DEFAULT_CHECKPOINT_PATH,
         classes_path: Path = DEFAULT_CLASSES_PATH,
+        device: str = "cpu",
     ) -> None:
-        self.device = choose_device()
+        self.device = choose_device(device)
         self.model_version = MODEL_VERSION
         self.classes = load_classes(classes_path)
         self.model = build_model(

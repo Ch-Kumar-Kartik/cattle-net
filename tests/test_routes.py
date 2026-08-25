@@ -10,7 +10,7 @@ from cattle_net.routes import MAX_UPLOAD_BYTES, create_prediction, health_check,
 
 
 class FakeClassifier:
-    device = "cuda"
+    device = "cpu"
     model_version = "v1"
 
     def __init__(self) -> None:
@@ -80,7 +80,7 @@ def test_health_returns_classifier_metadata(app_and_classifier):
     assert response.model_dump() == {
         "status": "ok",
         "classifier_loaded": True,
-        "device": "cuda",
+        "device": "cpu",
         "model_version": "v1",
     }
 

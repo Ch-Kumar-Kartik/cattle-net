@@ -11,13 +11,12 @@ export default function Footer() {
             <span className="bg-emerald-600 p-2 rounded-md"><Camera className="size-5 text-white" /></span>
             <span className="font-semibold text-lg">CattleCare AI</span>
           </div>
-          <p className="text-sm text-gray-300">Smart AI solutions for cattle health<br />and breed detection.</p>
+          <p className="text-sm text-gray-300">Smart breed recognition and cattle-care record keeping.</p>
         </div>
         <div>
           <div className="font-bold mb-2">Services</div>
           <ul className="space-y-1 text-sm">
             <li><Link href="/detect" className="hover:underline">Breed Detection</Link></li>
-            <li><Link href="/detect" className="hover:underline">Disease Detection</Link></li>
             <li><Link href="/tools" className="hover:underline">Feed & Nutrition</Link></li>
             <li><Link href="/tools" className="hover:underline">Find Nearby Vet</Link></li>
           </ul>

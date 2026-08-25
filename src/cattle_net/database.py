@@ -1,9 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///./cattle-net.db"
+from .config import settings
 
 engine = create_async_engine(
-    SQLALCHEMY_DATABASE_URL,
+    settings.database_url,
 )
 
 AsyncSessionLocal = async_sessionmaker(

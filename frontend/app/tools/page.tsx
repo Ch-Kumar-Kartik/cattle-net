@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Phone, Syringe, Salad, MapPin, Search, Loader2 } from "lucide-react"
+import { CareManager } from "@/components/CareManager"
 
 function VaccinationReminder() {
   const [breed, setBreed] = useState("")
@@ -535,7 +536,7 @@ export default function ToolsPage() {
             </div>
             <div>
               <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-                Health Tools
+                Cattle Care Tools
               </h1>
               <p className="text-sm text-gray-600">Comprehensive cattle care management</p>
             </div>
@@ -555,16 +556,12 @@ export default function ToolsPage() {
               Professional Cattle Care Tools
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Advanced tools for vaccination scheduling, nutrition planning, and emergency assistance
+              Save cattle-care plans, vaccination records, and find nearby veterinary assistance
             </p>
           </div>
 
-          <div className="grid gap-8 lg:grid-cols-2">
-            <VaccinationReminder />
-            <NutritionCalculator />
-            <div className="lg:col-span-2">
-              <NearbyVetMap />
-            </div>
+          <div className="grid gap-8">
+            <CareManager />
           </div>
         </div>
       </div>

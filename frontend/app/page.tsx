@@ -1,9 +1,13 @@
 "use client"
 
 import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
+
+import { clearAccessToken, getAccessToken } from "@/lib/auth"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Camera, Scan, Stethoscope, Leaf, MapPin } from "lucide-react"
+import { Camera, Scan, Leaf, MapPin } from "lucide-react"
 
 function Hero() {
   return (
@@ -25,11 +29,11 @@ function Hero() {
           </div>
           
           <h1 className="text-4xl md:text-6xl font-bold text-balance bg-gradient-to-r from-gray-900 via-blue-800 to-purple-900 bg-clip-text text-transparent leading-tight">
-            Smart AI for Cattle Health & Breed Detection
+            Smart AI for Cattle Breed Recognition & Care Records
           </h1>
           
           <p className="text-lg md:text-xl text-gray-600 text-pretty max-w-2xl mx-auto leading-relaxed">
-            Transform your livestock management with cutting-edge AI technology. Upload a photo and get instant insights on breed identification, health assessment, and expert care recommendations.
+            Identify cattle breeds from images and keep diet plans and vaccination records organized in one place.
           </p>
         </div>
         
@@ -48,26 +52,6 @@ function Hero() {
           </Button>
         </div>
         
-        <div className="flex items-center justify-center gap-8 pt-8 text-sm text-gray-500">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-              <span className="text-blue-600 font-bold text-xs">✓</span>
-            </div>
-            <span>99% Accuracy</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
-              <span className="text-indigo-600 font-bold text-xs">⚡</span>
-            </div>
-            <span>Instant Results</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-              <span className="text-purple-600 font-bold text-xs">🛡</span>
-            </div>
-            <span>Secure & Private</span>
-          </div>
-        </div>
       </div>
     </section>
   )
@@ -85,15 +69,6 @@ function FeatureCards() {
       iconColor: "text-blue-600"
     },
     {
-      title: "Disease Detection",
-      description: "AI-powered health check for your animals.",
-      icon: Stethoscope,
-      href: "/detect",
-      gradient: "from-indigo-500 to-purple-600",
-      bgColor: "bg-indigo-50",
-      iconColor: "text-indigo-600"
-    },
-    {
       title: "Feed & Nutrition",
       description: "Personalized diet and cost-effective feed plans.",
       icon: Leaf,
@@ -101,15 +76,6 @@ function FeatureCards() {
       gradient: "from-green-500 to-emerald-600",
       bgColor: "bg-green-50",
       iconColor: "text-green-600"
-    },
-    {
-      title: "Nearby Veterinarians",
-      description: "Find veterinary clinics and emergency services.",
-      icon: MapPin,
-      href: "/tools",
-      gradient: "from-red-500 to-pink-600",
-      bgColor: "bg-red-50",
-      iconColor: "text-red-600"
     },
   ]
 
@@ -121,11 +87,11 @@ function FeatureCards() {
             Comprehensive Cattle Care Solutions
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Everything you need to ensure your livestock's health and productivity in one intelligent platform
+            Breed recognition and practical cattle-care record keeping in one intelligent platform
           </p>
         </div>
         
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4 max-w-6xl mx-auto">
+        <div className="grid max-w-3xl mx-auto gap-8 md:grid-cols-2">
           {features.map((feature, index) => (
             <Link
               key={feature.title}
@@ -172,6 +138,19 @@ function FeatureCards() {
 }
 
 export default function HomePage() {
+  const router = useRouter()
+  const [isSignedIn, setIsSignedIn] = useState(false)
+
+  useEffect(() => {
+    setIsSignedIn(getAccessToken() !== null)
+  }, [])
+
+  function signOut(): void {
+    clearAccessToken()
+    setIsSignedIn(false)
+    router.push("/auth")
+  }
+
   return (
     <main>
       <header className="w-full px-4 md:px-6 py-3 md:py-4 bg-white/95 backdrop-blur-sm border-b border-gray-100 sticky top-0 z-50">
@@ -196,9 +175,15 @@ export default function HomePage() {
               Nearby Vets
             </Link>
           </nav>
-          <Button asChild className="rounded-full" variant="outline">
-            <Link href="/auth">Sign in</Link>
-          </Button>
+          {isSignedIn ? (
+            <Button className="rounded-full" onClick={signOut} variant="outline">
+              Sign out
+            </Button>
+          ) : (
+            <Button asChild className="rounded-full" variant="outline">
+              <Link href="/auth">Sign in</Link>
+            </Button>
+          )}
         </div>
       </header>
 
