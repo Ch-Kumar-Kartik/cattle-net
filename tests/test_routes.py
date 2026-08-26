@@ -2,6 +2,7 @@ import asyncio
 from io import BytesIO
 from types import SimpleNamespace
 
+import httpx
 import pytest
 from fastapi import FastAPI, HTTPException, Request
 from PIL import Image
@@ -75,7 +76,7 @@ def make_image_bytes() -> bytes:
 def test_health_returns_classifier_metadata(app_and_classifier):
     app, _ = app_and_classifier
 
-    response = health_check(make_request(app), SimpleNamespace(id=1))
+    response = asyncio.run(health_check(make_request(app)))
 
     assert response.model_dump() == {
         "status": "ok",
@@ -83,6 +84,46 @@ def test_health_returns_classifier_metadata(app_and_classifier):
         "device": "cpu",
         "model_version": "v1",
     }
+
+
+def test_health_is_public_and_reports_classifier_metadata(app_and_classifier):
+    app, _ = app_and_classifier
+
+    async def exercise():
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(
+            transport=transport,
+            base_url="http://testserver",
+        ) as client:
+            return await client.get("/health")
+
+    response = asyncio.run(exercise())
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "status": "ok",
+        "classifier_loaded": True,
+        "device": "cpu",
+        "model_version": "v1",
+    }
+
+
+def test_prediction_history_remains_protected_without_authentication(
+    app_and_classifier,
+):
+    app, _ = app_and_classifier
+
+    async def exercise():
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(
+            transport=transport,
+            base_url="http://testserver",
+        ) as client:
+            return await client.get("/api/v1/predictions/history")
+
+    response = asyncio.run(exercise())
+
+    assert response.status_code == 401
 
 
 def test_prediction_returns_top_three_and_passes_pil_image(

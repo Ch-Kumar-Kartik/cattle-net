@@ -23,7 +23,7 @@ MAX_UPLOAD_BYTES = settings.max_upload_size_bytes
 
 
 @router.get("/health", response_model=HealthResponse)
-def health_check(request: Request, current_user: CurrentUser) -> HealthResponse:
+async def health_check(request: Request) -> HealthResponse:
     classifier = getattr(request.app.state, "cattle_classifier", None)
 
     if classifier is None:
